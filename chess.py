@@ -49,11 +49,37 @@ class ChessGame():
             return False
         elif dx != 0 or self.board[destSq] != b'00':
             return True
-        elif dy == side*2 and initSq[0] == int(-2.5*side + 3.5):
+        elif (dy == side*2 and initSq[0] == int(-2.5*side + 3.5)
+            and self.board[initSq[0]+side, initSq[1]] == b'00'):
             return False
         elif dy == side:
             return False
         return True
+    
+    def collisionDetection(self, initSq, destSq):
+        dy = destSq[0]-initSq[0]
+        dx = destSq[1]-initSq[1]
+
+        if dx == 0:
+            moveLine = self.board[min(destSq[0], initSq[0])+1:max(destSq[0],initSq[0]), initSq[1]]
+
+        elif dy == 0:
+            moveLine = self.board[initSq[0], min(destSq[1], initSq[1])+1:max(destSq[1],initSq[1])]
+
+        elif dx == dy:
+            moveLine = np.diag(np.fliplr(self.board), k=0)
+
+        elif dx == -dy:
+            moveLine = np.diag(self.board, k=initSq[1]-initSq[0])
+        
+        else:
+            raise GameError('Collision detection failed')
+
+        print(moveLine)
+        if len(set(moveLine)) != 1:
+            return True
+
+        return False
 
     def fordiddenMoves(self, pawn, initSq, destSq):
         dy = destSq[0]-initSq[0]
@@ -69,21 +95,27 @@ class ChessGame():
         pawn = chr(pawn[1])
         dy = abs(dy)
 
-        if pawn == 'R':
-            if dx != 0 and dy != 0:
-                return True
-        elif pawn == 'N':
+        if pawn == 'N':
             if not((dx==1 and dy==2) or (dx==2 and dy==1)):
-                return True
-        elif pawn == 'B':
-            if dx != dy:
-                return True
-        elif pawn == 'Q':
-            if np.arctan(dy/dx) % (np.pi/4) != 0.0:
                 return True
         elif pawn == 'K':
             if not(dx < 2 and dy < 2):
                 return True
+
+        # collision detection
+        elif pawn == 'R':
+            if (dx != 0 and dy != 0
+                or self.collisionDetection(initSq, destSq)):
+                return True
+        elif pawn == 'B':
+            if (dx != dy
+                or self.collisionDetection(initSq, destSq)):
+                return True
+        elif pawn == 'Q':
+            if (np.arctan(dy/dx) % (np.pi/4) != 0.0
+                or self.collisionDetection(initSq, destSq)):
+                return True
+        
         else:
             raise GameError('Unknown pawn')
 
