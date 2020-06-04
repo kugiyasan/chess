@@ -6,6 +6,13 @@ class ChessGame():
         self.BOARDSIZE = 8
         self.turn = 0
 
+        self.BKmoved = False
+        self.LBRmoved = False
+        self.RBRmoved = False
+        self.WKmoved = False
+        self.LWRmoved = False
+        self.RWRmoved = False
+
         # init board and initial pawn places
         self.board = np.full((self.BOARDSIZE, self.BOARDSIZE), '00', dtype='|S2')
         self.board[0] = ['BR', 'BN', 'BB', 'BQ', 'BK', 'BB', 'BN', 'BR']
@@ -13,7 +20,7 @@ class ChessGame():
         self.board[1] = ['BP'] * self.BOARDSIZE
         self.board[6] = ['WP'] * self.BOARDSIZE
 
-    def playerMove(self, color, initSq, destSq):
+    def playerMove(self, color, initSq, destSq, pawnPromotion='Q', doNotUpdateTurn=False):
         if self.turn != color:
             raise GameError("Not this player's turn")
 
@@ -37,12 +44,35 @@ class ChessGame():
             raise GameError('There is already one of your pawn at destSq')
 
         if self.fordiddenMoves(self.board[initSq], initSq, destSq):
-            raise GameError('Forbidden move for this type of pawn')
+            raise GameError('Illegal move for this pawn')
+
+        if initSq == (0, 0):
+            self.LBRmoved = True
+        elif initSq == (7, 0):
+            self.LWRmoved = True
+        elif initSq == (0, 7):
+            self.RBRmoved = True
+        elif initSq == (7, 7):
+            self.RWRmoved = True
+        elif initSq == (0, 4):
+            self.BKmoved = True
+        elif initSq == (7, 4):
+            self.WKmoved = True
+
+        if self.board[destSq][1] == b'K':
+            winner = ('White', 'Black')[self.turn]
+            print(f'{winner} won!')
+            return self.turn, self.emojiBoard
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = '00'
 
-        self.turn = (self.turn + 1) % 2
+        if self.board[destSq][1] == b'P' and (destSq[0] == 0 or destSq[0] == 7):
+            print('Pawn promotion!')
+            self.board[destSq][1] = pawnPromotion.encode()
+
+        if not doNotUpdateTurn:
+            self.turn = (self.turn + 1) % 2
 
     def pawnLogic(self, dx, dy, pawn, initSq, destSq, side):
         if dx == 1 and dy == side and self.board[destSq] != b'00':
@@ -67,7 +97,7 @@ class ChessGame():
             moveLine = self.board[initSq[0], min(destSq[1], initSq[1])+1:max(destSq[1],initSq[1])]
 
         elif dx == dy:
-            moveLine = np.diag(np.fliplr(self.board), k=0)
+            moveLine = np.diag(np.fliplr(self.board), k=3-initSq[1]-initSq[0])
 
         elif dx == -dy:
             moveLine = np.diag(self.board, k=initSq[1]-initSq[0])
@@ -83,36 +113,57 @@ class ChessGame():
 
     def fordiddenMoves(self, pawn, initSq, destSq):
         dy = destSq[0]-initSq[0]
-        dx = abs(destSq[1]-initSq[1])
+        dx = destSq[1]-initSq[1]
         print(pawn, dx, dy)
 
         if pawn == b'WP':
-            return self.pawnLogic(dx, dy, pawn, initSq, destSq, -1)
+            return self.pawnLogic(abs(dx), dy, pawn, initSq, destSq, -1)
             
         elif pawn == b'BP':
-            return self.pawnLogic(dx, dy, pawn, initSq, destSq, 1)
+            return self.pawnLogic(abs(dx), dy, pawn, initSq, destSq, 1)
         
-        pawn = chr(pawn[1])
-        dy = abs(dy)
+        pawnType = chr(pawn[1])
 
-        if pawn == 'N':
-            if not((dx==1 and dy==2) or (dx==2 and dy==1)):
+        if pawnType == 'N':
+            if not((abs(dx)==1 and abs(dy)==2) or (abs(dx)==2 and abs(dy)==1)):
                 return True
-        elif pawn == 'K':
-            if not(dx < 2 and dy < 2):
+        elif pawnType == 'K':
+            if dy == 0:
+                if (dx == 2 
+                    and not self.WKmoved
+                    and pawn == b'WK'
+                    and not self.RWRmoved):
+                        self.playerMove(0, 'h1', 'f1', doNotUpdateTurn=True)
+                elif (dx == -2 
+                    and not self.WKmoved
+                    and pawn == b'WK'
+                    and not self.LWRmoved):
+                        self.playerMove(0, 'a1', 'd1', doNotUpdateTurn=True)
+                elif (dx == 2 
+                    and not self.BKmoved
+                    and pawn == b'WK'
+                    and not self.RWRmoved):
+                        self.playerMove(1, 'h8', 'f8', doNotUpdateTurn=True)
+                elif (dx == -2 
+                    and not self.WKmoved
+                    and pawn == b'WK'
+                    and not self.LWRmoved):
+                        self.playerMove(1, 'a8', 'd8', doNotUpdateTurn=True)
+
+            elif not(abs(dx) < 2 and abs(dy) < 2):
                 return True
 
         # collision detection
-        elif pawn == 'R':
-            if (dx != 0 and dy != 0
+        elif pawnType == 'R':
+            if (abs(dx) != 0 and abs(dy) != 0
                 or self.collisionDetection(initSq, destSq)):
                 return True
-        elif pawn == 'B':
-            if (dx != dy
+        elif pawnType == 'B':
+            if (abs(dx) != abs(dy)
                 or self.collisionDetection(initSq, destSq)):
                 return True
-        elif pawn == 'Q':
-            if (np.arctan(dy/dx) % (np.pi/4) != 0.0
+        elif pawnType == 'Q':
+            if (np.arctan(abs(dy)/abs(dx)) % (np.pi/4) != 0.0
                 or self.collisionDetection(initSq, destSq)):
                 return True
         
@@ -133,21 +184,23 @@ class ChessGame():
                 
                 board[x][y] = board[x][y].decode("utf-8")
 
-                # board[x][y] = (board[x][y]
-                #     .replace('BB', '<:BB:717894296396890154>')
-                #     .replace('BK', '<:BK:717894296459542587>')
-                #     .replace('BN', '<:BN:717894296329781250>')
-                #     .replace('BP', '<:BP:717894296572788787>')
-                #     .replace('BQ', '<:BQ:717894296409473047>')
-                #     .replace('BR', '<:BR:717894296870584320>')
-                #     .replace('WB', '<:WB:717894297109659748>')
-                #     .replace('WK', '<:WK:717894296673452041>')
-                #     .replace('WN', '<:WN:717894296698617877>')
-                #     .replace('WP', '<:WP:717894296992219176>')
-                #     .replace('WQ', '<:WQ:717894296967315517>')
-                #     .replace('WR', '<:WR:717894296807931984>'))
+                board[x][y] = (board[x][y]
+                    .replace('BB', '<:BB:717894296396890154>')
+                    .replace('BK', '<:BK:717894296459542587>')
+                    .replace('BN', '<:BN:717894296329781250>')
+                    .replace('BP', '<:BP:717894296572788787>')
+                    .replace('BQ', '<:BQ:717894296409473047>')
+                    .replace('BR', '<:BR:717894296870584320>')
+                    .replace('WB', '<:WB:717894297109659748>')
+                    .replace('WK', '<:WK:717894296673452041>')
+                    .replace('WN', '<:WN:717894296698617877>')
+                    .replace('WP', '<:WP:717894296992219176>')
+                    .replace('WQ', '<:WQ:717894296967315517>')
+                    .replace('WR', '<:WR:717894296807931984>'))
 
-        return '\n'.join(''.join(row) for row in board)
+        number = (':eight:', ':seven:', ':six:', ':five:', ':four:', ':three:', ':two:', ':one:')
+        header = '⬛:regional_indicator_a::regional_indicator_b::regional_indicator_c::regional_indicator_d::regional_indicator_e::regional_indicator_f::regional_indicator_g::regional_indicator_h:\n'
+        return header + '\n'.join(number[i]+''.join(row) for i, row in enumerate(board))
 
 class GameError(Exception):
     pass
