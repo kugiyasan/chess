@@ -28,6 +28,11 @@ class Board():
         #     Knight((7, 6), Color.WHITE),
         #     Rook((7, 7), Color.WHITE)
         # ]
+        self.board[0][4] = King('B')
+        self.board[7][4] = King('W')
+        self.board[0][3] = Queen('B')
+        self.board[7][3] = Queen('W')
+
         self.board[1] = [Pawn('B') for i in range(8)]
         self.board[6] = [Pawn('W') for i in range(8)]
 
@@ -56,10 +61,11 @@ class Board():
 
         self._move(initSq, destSq)
 
-        self.turn = (self.turn + 1) % 2
+        self.turn += 1
 
     def _move(self, initSq, destSq):
-        emptySquaresCoords = self.board[initSq].checkIfValid(initSq, destSq, self.color)
+        emptySquaresCoords = self.board[initSq].checkIfValid(initSq, destSq, self.turn)
+        self.board[initSq].move()
 
         if emptySquaresCoords:
             print(emptySquaresCoords)
@@ -67,17 +73,29 @@ class Board():
                 if self.board[coord] != None:
                     raise GameError('There is a piece in the way!')
 
-        else:
+        if type(self.board[initSq]) == Pawn:
             print(type(self.board[initSq]))
-            if type(self.board[initSq]) == Pawn and self.board[destSq] == None:
-                raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
+
+            # if len(emptySquaresCoords) == 2:
+            #     betweenSq = ((initSq[0] + destSq[0])//2, initSq[1])
+            #     self.board[betweenSq] = self.board[initSq]
+
+            if not emptySquaresCoords:
+                # exception: pawn moving in diagonal need a opponent at destSq
+                if self.board[destSq] == None:
+                    EnPassantPawn = self.board[initSq[0], destSq[1]]
+                    if type(EnPassantPawn) == Pawn and EnPassantPawn.doubleStartTurn == self.turn+1:
+                        self.board[initSq[0], destSq[1]] = None
+                        
+                    else:
+                        raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
+                
+                # pawn promotion, default to Queen
+                if destSq[0] == 0 or destSq[0] == 7:
+                    self.board[initSq] = Queen(self.board[initSq].COLOR)
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = None
-
-    @property
-    def color(self):
-        return ('W', 'B')[self.turn]
 
     def __repr__(self):
         board = np.copy(self.board)
@@ -118,6 +136,8 @@ class Board():
         
 
 if __name__ == "__main__":
+    import sys
+
     game = Board()
 
     while 1:
@@ -130,9 +150,13 @@ if __name__ == "__main__":
             game.movePiece(initSq, destSq)
         except GameError as errorMessage:
             print(errorMessage)
+            sys.stdout.write("\033[F" + "\033[F\033[K" * 10)
+            continue
+
+        sys.stdout.write("\033[F\033[K" * 13)
 
     # def playerMove(self, color, initSq, destSq, pawnPromotion='Q', doNotUpdateTurn=False):
-    #     if self.turn != color:
+    #     if self.turn % 2 != color:
     #         raise GameError("Not this player's turn")
 
     #     if self.fordiddenMoves(self.board[initSq], initSq, destSq):
