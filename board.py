@@ -61,16 +61,16 @@ class Board():
     def _move(self, initSq, destSq):
         emptySquaresCoords = self.board[initSq].checkIfValid(initSq, destSq, self.color)
 
-        print(emptySquaresCoords[0])
-        print(self.board[emptySquaresCoords[0]])
         if emptySquaresCoords:
-            if len(emptySquaresCoords) == 1:
-                if self.board[emptySquaresCoords[0]] != None:
+            print(emptySquaresCoords)
+            for coord in emptySquaresCoords:
+                if self.board[coord] != None:
                     raise GameError('There is a piece in the way!')
-            
-            else:
-                if set(self.board[emptySquaresCoords]) != {None}:
-                    raise GameError('There is a piece in the way!')
+
+        else:
+            print(type(self.board[initSq]))
+            if type(self.board[initSq]) == Pawn and self.board[destSq] == None:
+                raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = None
@@ -120,16 +120,16 @@ class Board():
 if __name__ == "__main__":
     game = Board()
 
-    initSq = input('initSq: ')
-    destSq = input('destSq: ')
+    while 1:
+        print(game)
 
-    try:
-        game.movePiece(initSq, destSq)
-    except GameError as errorMessage:
-        print(errorMessage)
+        initSq = input('initSq: ')
+        destSq = input('destSq: ')
 
-    print(game)
-
+        try:
+            game.movePiece(initSq, destSq)
+        except GameError as errorMessage:
+            print(errorMessage)
 
     # def playerMove(self, color, initSq, destSq, pawnPromotion='Q', doNotUpdateTurn=False):
     #     if self.turn != color:

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from enum import Enum
 import numpy as np
 import re
 
@@ -8,16 +7,16 @@ class GameError(Exception):
 
 class Piece(ABC):
     def __init__(self, color):
+        if color != 'W' and color != 'B':
+            raise ValueError('color should be equal to "W" or "B"')
+
         self.COLOR = color
 
     def __repr__(self):
         return self.COLOR + type(self).__name__[0]
-        # return ('W', 'B')[self.COLOR.value] + type(self).__name__[0]
-        # return '\n<{} at {}>'.format(type(self).__name__, self.position)
 
     @abstractmethod
     def checkIfValid(self, initSq, destSq, color):
-        print('Piece.checkIfValid', initSq, destSq)
         if initSq == destSq:
             raise GameError('You need to move the piece')
 
@@ -33,13 +32,26 @@ class Pawn(Piece):
 
     def checkIfValid(self, initSq, destSq, color):
         super().checkIfValid(initSq, destSq, color)
-
-        # check for pawn specific move and return the squares that need to be empty to be a valid move
-
+        
         dx = destSq[1] - initSq[1]
         dy = destSq[0] - initSq[0]
+        side = -1 if self.COLOR == 'W' else 1
 
-        if abs(dx) < 2 and abs(dy) < 2:
+        # diagonal attack
+        if abs(dx) == 1 and dy == side:
             return
 
-        return ((initSq[0]+(destSq[0]-initSq[0])//2, initSq[1]),)
+        if dx != 0:
+            raise GameError("Pawn can't move horizontally")
+
+        if abs(dy) > 2:
+            raise GameError("Pawn can't move more than 2 squares in a straight line")
+
+        if abs(dy) == 2:
+            if self.hasMoved:
+                raise GameError("Pawn can only move 2 squares at the beginning")
+            
+            self.hasMoved = True
+            return ((initSq[0]+(destSq[0]-initSq[0])//2, initSq[1]), destSq)
+
+        return (destSq,)
