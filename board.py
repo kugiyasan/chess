@@ -5,6 +5,7 @@ from pieces import *
 
 class Board():
     def __init__(self):
+        self.turn = 0
         self.board = np.full((8, 8), None, dtype=object)
 
         # self.board[0] = [
@@ -27,10 +28,15 @@ class Board():
         #     Knight((7, 6), Color.WHITE),
         #     Rook((7, 7), Color.WHITE)
         # ]
-        self.board[1] = [Pawn((1, i), Color.BLACK) for i in range(8)]
-        self.board[6] = [Pawn((6, i), Color.WHITE) for i in range(8)]
+        self.board[1] = [Pawn('B') for i in range(8)]
+        self.board[6] = [Pawn('W') for i in range(8)]
 
     def movePiece(self, initSq, destSq):
+        '''The Board object will make general check to see if the move is valid,
+            then it is going to ask the Piece object if it is a legal move
+            and ask at the same time for squares that needs to be empty in order
+            to ensure the coplete legality of the move'''
+
         initSq = initSq.lower()
         destSq = destSq.lower()
 
@@ -41,18 +47,37 @@ class Board():
         initSq = (8-int(initSq[1]), ord(initSq[0])-ord('a'))
         destSq = (8-int(destSq[1]), ord(destSq[0])-ord('a'))
 
-        if initSq == destSq:
-            raise GameError('You need to move the pawn')
+        if not self.board[initSq]:
+            raise GameError('No piece at initSq')
+
+        if str(self.board[destSq])[0] == str(self.board[initSq])[0]:
+            # wrong initSq color and wrong destSq won't be catched here
+            raise GameError('initSq and destSq have Pieces of the same color')
 
         self._move(initSq, destSq)
 
         self.turn = (self.turn + 1) % 2
 
     def _move(self, initSq, destSq):
-        self.board[initSq].checkIfValid(initSq, destSq)
+        emptySquaresCoords = self.board[initSq].checkIfValid(initSq, destSq, self.color)
+
+        print(emptySquaresCoords[0])
+        print(self.board[emptySquaresCoords[0]])
+        if emptySquaresCoords:
+            if len(emptySquaresCoords) == 1:
+                if self.board[emptySquaresCoords[0]] != None:
+                    raise GameError('There is a piece in the way!')
+            
+            else:
+                if set(self.board[emptySquaresCoords]) != {None}:
+                    raise GameError('There is a piece in the way!')
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = None
+
+    @property
+    def color(self):
+        return ('W', 'B')[self.turn]
 
     def __repr__(self):
         board = np.copy(self.board)
@@ -109,12 +134,6 @@ if __name__ == "__main__":
     # def playerMove(self, color, initSq, destSq, pawnPromotion='Q', doNotUpdateTurn=False):
     #     if self.turn != color:
     #         raise GameError("Not this player's turn")
-
-    #     if not chr(self.board[initSq][0]) == ('W', 'B')[self.turn]:
-    #         raise GameError('No pawn or pawn of the adversary at initSq')
-
-    #     if chr(self.board[destSq][0]) == ('W', 'B')[self.turn]:
-    #         raise GameError('There is already one of your pawn at destSq')
 
     #     if self.fordiddenMoves(self.board[initSq], initSq, destSq):
     #         raise GameError('Illegal move for this pawn')
