@@ -4,37 +4,38 @@ import re
 from pieces import *
 
 class Board():
-    def __init__(self):
+    def __init__(self, onlyPawn=False):
         self.turn = 0
         self.board = np.full((8, 8), None, dtype=object)
 
-        # self.board[0] = [
-        #     Rook((0, 0), Color.BLACK),
-        #     Knight((0, 1), Color.BLACK),
-        #     Bishop((0, 2), Color.BLACK),
-        #     Queen((0, 3), Color.BLACK),
-        #     King((0, 4), Color.BLACK),
-        #     Bishop((0, 5), Color.BLACK),
-        #     Knight((0, 6), Color.BLACK),
-        #     Rook((0, 7), Color.BLACK)
-        # ]
-        # self.board[7] = [
-        #     Rook((7, 0), Color.WHITE),
-        #     Knight((7, 1), Color.WHITE),
-        #     Bishop((7, 2), Color.WHITE),
-        #     Queen((7, 3), Color.WHITE),
-        #     King((7, 4), Color.WHITE),
-        #     Bishop((7, 5), Color.WHITE),
-        #     Knight((7, 6), Color.WHITE),
-        #     Rook((7, 7), Color.WHITE)
-        # ]
-        self.board[0][4] = King('B')
-        self.board[7][4] = King('W')
-        self.board[0][3] = Queen('B')
-        self.board[7][3] = Queen('W')
-
         self.board[1] = [Pawn('B') for i in range(8)]
         self.board[6] = [Pawn('W') for i in range(8)]
+
+        if onlyPawn:
+            self.board[0][3] = King('B')
+            self.board[7][3] = King('W')
+            return
+
+        self.board[0] = [
+            Rook('B'),
+            Knight('B'),
+            Bishop('B'),
+            King('B'),
+            Queen('B'),
+            Bishop('B'),
+            Knight('B'),
+            Rook('B')
+        ]
+        self.board[7] = [
+            Rook('W'),
+            Knight('W'),
+            Bishop('W'),
+            King('W'),
+            Queen('W'),
+            Bishop('W'),
+            Knight('W'),
+            Rook('W')
+        ]
 
     def movePiece(self, initSq, destSq):
         '''The Board object will make general check to see if the move is valid,
@@ -103,19 +104,19 @@ class Board():
                 
                 board[x, y] = str(board[x, y])
 
-                # board[x][y] = (board[x][y]
-                #     .replace('BB', '<:BB:717894296396890154>')
-                #     .replace('BK', '<:BK:717894296459542587>')
-                #     .replace('BN', '<:BN:717894296329781250>')
-                #     .replace('BP', '<:BP:717894296572788787>')
-                #     .replace('BQ', '<:BQ:717894296409473047>')
-                #     .replace('BR', '<:BR:717894296870584320>')
-                #     .replace('WB', '<:WB:717894297109659748>')
-                #     .replace('WK', '<:WK:717894296673452041>')
-                #     .replace('WN', '<:WN:717894296698617877>')
-                #     .replace('WP', '<:WP:717894296992219176>')
-                #     .replace('WQ', '<:WQ:717894296967315517>')
-                #     .replace('WR', '<:WR:717894296807931984>'))
+        #         board[x][y] = (board[x][y]
+        #             .replace('BB', '<:BB:717894296396890154>')
+        #             .replace('BK', '<:BK:717894296459542587>')
+        #             .replace('BN', '<:BN:717894296329781250>')
+        #             .replace('BP', '<:BP:717894296572788787>')
+        #             .replace('BQ', '<:BQ:717894296409473047>')
+        #             .replace('BR', '<:BR:717894296870584320>')
+        #             .replace('WB', '<:WB:717894297109659748>')
+        #             .replace('WK', '<:WK:717894296673452041>')
+        #             .replace('WN', '<:WN:717894296698617877>')
+        #             .replace('WP', '<:WP:717894296992219176>')
+        #             .replace('WQ', '<:WQ:717894296967315517>')
+        #             .replace('WR', '<:WR:717894296807931984>'))
 
         # number = (':eight:', ':seven:', ':six:', ':five:',
         #           ':four:', ':three:', ':two:', ':one:')
