@@ -94,20 +94,20 @@ class King(Piece):
     def move(self):
         self.hasMoved = True
 
-# class Knight(Piece):
-#     def __init__(self, color):
-#         super().__init__(color)
+class Knight(Piece):
+    def __init__(self, color):
+        super().__init__(color)
 
-#     def checkIfValid(self, initSq, destSq, turn):
-#         super().checkIfValid(initSq, destSq, turn)
+    def checkIfValid(self, initSq, destSq, turn):
+        super().checkIfValid(initSq, destSq, turn)
 
-#         dx = abs(destSq[1] - initSq[1])
-#         dy = abs(destSq[0] - initSq[0])
+        dx = abs(destSq[1] - initSq[1])
+        dy = abs(destSq[0] - initSq[0])
 
-#         if (dx == 1 and dy == 2) or (dx == 2 and dy == 1):
-#             return
+        if (dx == 1 and dy == 2) or (dx == 2 and dy == 1):
+            return
 
-#         raise GameError("The Knight moves in L shape")
+        raise GameError("The Knight moves in L shape")
 
 # class Rook(Piece):
 #     def __init__(self, color):

@@ -73,26 +73,21 @@ class Board():
                 if self.board[coord] != None:
                     raise GameError('There is a piece in the way!')
 
-        if type(self.board[initSq]) == Pawn:
-            print(type(self.board[initSq]))
-
-            # if len(emptySquaresCoords) == 2:
-            #     betweenSq = ((initSq[0] + destSq[0])//2, initSq[1])
-            #     self.board[betweenSq] = self.board[initSq]
-
-            if not emptySquaresCoords:
-                # exception: pawn moving in diagonal need a opponent at destSq
-                if self.board[destSq] == None:
-                    EnPassantPawn = self.board[initSq[0], destSq[1]]
-                    if type(EnPassantPawn) == Pawn and EnPassantPawn.doubleStartTurn == self.turn+1:
-                        self.board[initSq[0], destSq[1]] = None
-                        
-                    else:
-                        raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
-                
-                # pawn promotion, default to Queen
-                if destSq[0] == 0 or destSq[0] == 7:
-                    self.board[initSq] = Queen(self.board[initSq].COLOR)
+        elif type(self.board[initSq]) == Pawn:
+            # exception: pawn moving in diagonal need a Piece to kill at destSq
+            if self.board[destSq] == None:
+                # double exception: en passant capture
+                EnPassantPawn = self.board[initSq[0], destSq[1]]
+                if type(EnPassantPawn) == Pawn and EnPassantPawn.doubleStartTurn+1 == self.turn:
+                    self.board[initSq[0], destSq[1]] = None
+                    
+                else:
+                    raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
+            
+            # pawn promotion, default to Queen
+            #? maybe offer to promote to Knight
+            if destSq[0] == 0 or destSq[0] == 7:
+                self.board[initSq] = Queen(self.board[initSq].COLOR)
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = None
@@ -122,7 +117,8 @@ class Board():
                 #     .replace('WQ', '<:WQ:717894296967315517>')
                 #     .replace('WR', '<:WR:717894296807931984>'))
 
-        # number = (':eight:', ':seven:', ':six:', ':five:', ':four:', ':three:', ':two:', ':one:')
+        # number = (':eight:', ':seven:', ':six:', ':five:',
+        #           ':four:', ':three:', ':two:', ':one:')
         # header = ('⬛:regional_indicator_a:'
         #         + ':regional_indicator_b:'
         #         + ':regional_indicator_c:'
@@ -136,8 +132,6 @@ class Board():
         
 
 if __name__ == "__main__":
-    import sys
-
     game = Board()
 
     while 1:
@@ -150,14 +144,3 @@ if __name__ == "__main__":
             game.movePiece(initSq, destSq)
         except GameError as errorMessage:
             print(errorMessage)
-            sys.stdout.write("\033[F" + "\033[F\033[K" * 10)
-            continue
-
-        sys.stdout.write("\033[F\033[K" * 13)
-
-    # def playerMove(self, color, initSq, destSq, pawnPromotion='Q', doNotUpdateTurn=False):
-    #     if self.turn % 2 != color:
-    #         raise GameError("Not this player's turn")
-
-    #     if self.fordiddenMoves(self.board[initSq], initSq, destSq):
-    #         raise GameError('Illegal move for this pawn')
