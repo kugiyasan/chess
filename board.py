@@ -4,12 +4,13 @@ import re
 from pieces import *
 
 class Board():
-    def __init__(self, onlyPawn=False):
+    def __init__(self, onlyPawn=False, noPawn=False):
         self.turn = 0
         self.board = np.full((8, 8), None, dtype=object)
 
-        self.board[1] = [Pawn('B') for i in range(8)]
-        self.board[6] = [Pawn('W') for i in range(8)]
+        if not noPawn:
+            self.board[1] = [Pawn('B') for i in range(8)]
+            self.board[6] = [Pawn('W') for i in range(8)]
 
         if onlyPawn:
             self.board[0][3] = King('B')
@@ -73,7 +74,12 @@ class Board():
             for coord in emptySquaresCoords:
                 if self.board[coord] != None:
                     raise GameError('There is a piece in the way!')
-
+            
+            # pawn promotion, default to Queen
+            #? maybe offer to promote to Knight
+            if destSq[0] == 0 or destSq[0] == 7:
+                self.board[initSq] = Queen(self.board[initSq].COLOR)
+        
         elif type(self.board[initSq]) == Pawn:
             # exception: pawn moving in diagonal need a Piece to kill at destSq
             if self.board[destSq] == None:
@@ -84,11 +90,6 @@ class Board():
                     
                 else:
                     raise GameError("Pawn moving in diagonal doesn't have a Piece to kill at destSq")
-            
-            # pawn promotion, default to Queen
-            #? maybe offer to promote to Knight
-            if destSq[0] == 0 or destSq[0] == 7:
-                self.board[initSq] = Queen(self.board[initSq].COLOR)
 
         self.board[destSq] = self.board[initSq]
         self.board[initSq] = None
@@ -104,42 +105,62 @@ class Board():
                 
                 board[x, y] = str(board[x, y])
 
-        #         board[x][y] = (board[x][y]
-        #             .replace('BB', '<:BB:717894296396890154>')
-        #             .replace('BK', '<:BK:717894296459542587>')
-        #             .replace('BN', '<:BN:717894296329781250>')
-        #             .replace('BP', '<:BP:717894296572788787>')
-        #             .replace('BQ', '<:BQ:717894296409473047>')
-        #             .replace('BR', '<:BR:717894296870584320>')
-        #             .replace('WB', '<:WB:717894297109659748>')
-        #             .replace('WK', '<:WK:717894296673452041>')
-        #             .replace('WN', '<:WN:717894296698617877>')
-        #             .replace('WP', '<:WP:717894296992219176>')
-        #             .replace('WQ', '<:WQ:717894296967315517>')
-        #             .replace('WR', '<:WR:717894296807931984>'))
+                board[x][y] = (board[x][y]
+                    .replace('BB', '<:BB:717894296396890154>')
+                    .replace('BK', '<:BK:717894296459542587>')
+                    .replace('BN', '<:BN:717894296329781250>')
+                    .replace('BP', '<:BP:717894296572788787>')
+                    .replace('BQ', '<:BQ:717894296409473047>')
+                    .replace('BR', '<:BR:717894296870584320>')
+                    .replace('WB', '<:WB:717894297109659748>')
+                    .replace('WK', '<:WK:717894296673452041>')
+                    .replace('WN', '<:WN:717894296698617877>')
+                    .replace('WP', '<:WP:717894296992219176>')
+                    .replace('WQ', '<:WQ:717894296967315517>')
+                    .replace('WR', '<:WR:717894296807931984>'))
 
-        # number = (':eight:', ':seven:', ':six:', ':five:',
-        #           ':four:', ':three:', ':two:', ':one:')
-        # header = ('⬛:regional_indicator_a:'
-        #         + ':regional_indicator_b:'
-        #         + ':regional_indicator_c:'
-        #         + ':regional_indicator_d:'
-        #         + ':regional_indicator_e:'
-        #         + ':regional_indicator_f:'
-        #         + ':regional_indicator_g:'
-        #         + ':regional_indicator_h:\n')
-        # return header + '\n'.join(number[i]+''.join(row) for i, row in enumerate(board))
+        number = (':eight:', ':seven:', ':six:', ':five:',
+                  ':four:', ':three:', ':two:', ':one:')
+        header = ('⬛:regional_indicator_a:'
+                + ':regional_indicator_b:'
+                + ':regional_indicator_c:'
+                + ':regional_indicator_d:'
+                + ':regional_indicator_e:'
+                + ':regional_indicator_f:'
+                + ':regional_indicator_g:'
+                + ':regional_indicator_h:\n')
+        return header + '\n'.join(number[i]+''.join(row) for i, row in enumerate(board))
+    
+    @property
+    def terminalBoard(self):
+        board = np.copy(self.board)
+
+        for x in range(8):
+            for y in range(8):
+                if board[x][y] == None:
+                    board[x][y] = ('⬛', '⬜')[(x + y) % 2]
+                    continue
+                
+                board[x, y] = str(board[x, y])
         return '\n'.join(''.join(row) for row in board)
         
 
 if __name__ == "__main__":
-    game = Board()
+    mode = input('only pawn? (default no): ').lower()
+    yesWords = {'y', 'yes', 'true', '1'}
+    if mode in yesWords:
+        game = Board(onlyPawn=True)
+    else:
+        game = Board()
 
     while 1:
-        print(game)
+        print(game.terminalBoard)
 
-        initSq = input('initSq: ')
-        destSq = input('destSq: ')
+        try:
+            initSq, destSq = input('Coordinates: ').split()
+        except ValueError:
+            print('Enter valid coordinates')
+            continue
 
         try:
             game.movePiece(initSq, destSq)

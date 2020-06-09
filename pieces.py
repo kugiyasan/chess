@@ -114,7 +114,6 @@ class Knight(Piece):
 
 class Rook(Piece):
     def __init__(self, color):
-        print('init Rook')
         super().__init__(color)
         self.hasMoved = False
 
@@ -141,7 +140,6 @@ class Rook(Piece):
 
 class Bishop(Piece):
     def __init__(self, color):
-        print('init Bishop')
         super().__init__(color)
 
     def checkIfValid(self, initSq, destSq, turn):
@@ -162,15 +160,16 @@ class Bishop(Piece):
         elif dx == -dy:
             return ((miny-x, minx+x) for x in range(miny+1, maxx))
 
-class Queen(Bishop, Rook):
+class Queen(Bishop):
     def checkIfValid(self, initSq, destSq, turn):
-        # should return if super return a value
-        super().checkIfValid(initSq, destSq, turn)
-
+        try:
+            return super().checkIfValid(initSq, destSq, turn)
+        except:
+            pass
+        
         dx = destSq[1] - initSq[1]
         dy = destSq[0] - initSq[0]
 
-        # Rook move
         if dx == 0:
             a = min(destSq[0], initSq[0]) + 1
             b = max(destSq[0], initSq[0])
@@ -180,9 +179,5 @@ class Queen(Bishop, Rook):
             a = min(destSq[1], initSq[1]) + 1
             b = max(destSq[1], initSq[1])
             return ((initSq[0], x) for x in range(a, b))
-        
+
         raise GameError("The Queen can move on a horizontal, vertical or a diagonal line")
-
-
-if __name__ == "__main__":
-    q = Queen('B')
