@@ -70,7 +70,6 @@ class Board():
         self.board[initSq].move()
 
         if emptySquaresCoords:
-            print(emptySquaresCoords)
             for coord in emptySquaresCoords:
                 if self.board[coord] != None:
                     raise GameError('There is a piece in the way!')
@@ -146,12 +145,21 @@ class Board():
         
 
 if __name__ == "__main__":
-    mode = input('only pawn? (default no): ').lower()
+    onlyPawn = input('only pawn? (default no): ').lower()
+    noPawn = input('no pawn? (default no): ').lower()
     yesWords = {'y', 'yes', 'true', '1'}
-    if mode in yesWords:
-        game = Board(onlyPawn=True)
+
+    if onlyPawn in yesWords:
+        onlyPawn = True
     else:
-        game = Board()
+        onlyPawn = False
+
+    if noPawn in yesWords:
+        noPawn = True
+    else:
+        noPawn = False
+
+    game = Board(onlyPawn=onlyPawn, noPawn=noPawn)
 
     while 1:
         print(game.terminalBoard)
