@@ -5,7 +5,7 @@ import re
 class GameError(Exception):
     pass
 
-class Piece(ABC):
+class _Piece(ABC):
     def __init__(self, color):
         if color != 'W' and color != 'B':
             raise ValueError('color should be equal to "W" or "B"')
@@ -28,7 +28,7 @@ class Piece(ABC):
         pass
 
 
-class Pawn(Piece):
+class Pawn(_Piece):
     def __init__(self, color):
         super().__init__(color)
         self.hasMoved = False
@@ -65,7 +65,7 @@ class Pawn(Piece):
         self.hasMoved = True
 
 
-class King(Piece):
+class King(_Piece):
     def __init__(self, color):
         super().__init__(color)
         self.hasMoved = False
@@ -94,7 +94,7 @@ class King(Piece):
     def move(self):
         self.hasMoved = True
 
-class Knight(Piece):
+class Knight(_Piece):
     def __init__(self, color):
         super().__init__(color)
 
@@ -112,7 +112,7 @@ class Knight(Piece):
 
         raise GameError("The Knight moves in L shape")
 
-class Rook(Piece):
+class Rook(_Piece):
     def __init__(self, color):
         super().__init__(color)
         self.hasMoved = False
@@ -140,7 +140,7 @@ class Rook(Piece):
     def move(self):
         self.hasMoved = True
 
-class Bishop(Piece):
+class Bishop(_Piece):
     def __init__(self, color):
         super().__init__(color)
 

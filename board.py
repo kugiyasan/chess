@@ -1,7 +1,7 @@
 import numpy as np
 import re
 
-from pieces import *
+from .pieces import *
 
 class Board():
     def __init__(self, onlyPawn=False, noPawn=False):
@@ -9,8 +9,8 @@ class Board():
         self.board = np.full((8, 8), None, dtype=object)
 
         if not noPawn:
-            self.board[1] = [Pawn('B') for i in range(8)]
-            self.board[6] = [Pawn('W') for i in range(8)]
+            self.board[1] = (Pawn('B') for i in range(8))
+            self.board[6] = (Pawn('W') for i in range(8))
 
         if onlyPawn:
             self.board[0][3] = King('B')
